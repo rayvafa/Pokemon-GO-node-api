@@ -123,11 +123,16 @@ function Pokeio() {
     };
 
     self.request.post(options, function (err, response, body) {
+      if (err)
+      {
+        return callback(new Error('Error'));
+      }
+      
       if (response === undefined || body === undefined) {
         console.error('[!] RPC Server offline');
         return callback(new Error('RPC Server offline'));
       }
-
+      
       var f_ret;
       try {
         f_ret = ResponseEnvelop.decode(body);
@@ -342,6 +347,58 @@ function Pokeio() {
     });
   };
 
+  self.EvolvePokemon = function (pokemonId, callback) {
+    var _self$playerInfo3 = self.playerInfo;
+    var apiEndpoint = _self$playerInfo3.apiEndpoint;
+    var accessToken = _self$playerInfo3.accessToken;
+
+    var evolvePokemon = new RequestEnvelop.EvolvePokemonMessage({
+      'PokemonId': pokemonId
+    });
+
+    var req = new RequestEnvelop.Requests(125, evolvePokemon.encode().toBuffer());
+
+    api_req(apiEndpoint, accessToken, req, function (err, f_ret) {
+      if (err) {
+        return callback(err);
+      } else if (!f_ret || !f_ret.payload || !f_ret.payload[0]) {
+        return callback('No result');
+      }
+      try {
+        var catchPokemonResponse = ResponseEnvelop.EvolvePokemonResponse.decode(f_ret.payload[0]);
+        callback(null, catchPokemonResponse);
+      } catch (err) {
+        callback(err, null);
+      }
+    });
+  };
+
+  self.TransferPokemon = function (pokemonId, callback) {
+    var _self$playerInfo3 = self.playerInfo;
+    var apiEndpoint = _self$playerInfo3.apiEndpoint;
+    var accessToken = _self$playerInfo3.accessToken;
+
+    var evolvePokemon = new RequestEnvelop.TransferPokemonMessage({
+      'PokemonId': pokemonId
+    });
+
+    var req = new RequestEnvelop.Requests(112, evolvePokemon.encode().toBuffer());
+
+    api_req(apiEndpoint, accessToken, req, function (err, f_ret) {
+      if (err) {
+        return callback(err);
+      } else if (!f_ret || !f_ret.payload || !f_ret.payload[0]) {
+        return callback('No result');
+      }
+      try {
+        var catchPokemonResponse = ResponseEnvelop.TransferPokemonResponse.decode(f_ret.payload[0]);
+        callback(null, catchPokemonResponse);
+      } catch (err) {
+        callback(err, null);
+      }
+    });
+  };
+
   //still WIP
   self.CatchPokemon = function (mapPokemon, normalizedHitPosition, normalizedReticleSize, spinModifier, pokeball, callback) {
     var _self$playerInfo3 = self.playerInfo;
@@ -352,7 +409,7 @@ function Pokeio() {
       'encounter_id': mapPokemon.EncounterId,
       'pokeball': pokeball,
       'normalized_reticle_size': normalizedReticleSize,
-      'spawnpoint_id': mapPokemon.SpawnpointId,
+      'spawnpoint_id': mapPokemon.SpawnPointId,
       'hit_pokemon': true,
       'spin_modifier': spinModifier,
       'normalized_hit_position': normalizedHitPosition
@@ -384,7 +441,7 @@ function Pokeio() {
 
     var encounterPokemon = new RequestEnvelop.EncounterMessage({
       'encounter_id': catchablePokemon.EncounterId,
-      'spawnpoint_id': catchablePokemon.SpawnpointId,
+      'spawnpoint_id': catchablePokemon.SpawnPointId,
       'player_latitude': latitude,
       'player_longitude': longitude
     });
